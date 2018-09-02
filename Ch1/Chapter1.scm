@@ -91,3 +91,81 @@
         ((= k n) 1)
         (else (+ (pascal (- n 1) k)
                  (pascal (- n 1) (- k 1))))))
+
+;; Exercise 1.15
+(define (cube x) (* x x x))
+
+(define (sine angle)
+  (define (p x)
+    (display "p") (newline)
+    (- (* 3 x) (* 4 (cube x))))
+  (if (< (abs angle) 0.1)
+      angle
+      (p (sine (/ angle 3)))))
+
+(sine 12.15)
+
+;; Exercise 1.16
+;; Iterative version of fast-expt
+(define (expt base exp)
+  (define (square x) (* x x))
+  (define (even? x) (= (remainder x 2) 0))
+  (define (expt-iter a b n)
+    (cond ((= n 0) a)
+          ((even? n) (expt-iter a (square b) (/ n 2)))
+          (else (expt-iter (* a b) b (- n 1)))))
+  (expt-iter 1 base exp))
+(expt 3 5)
+
+;; Exercise 1.7
+;; Fast multiplication
+(define (mul a b)
+  (define (even? x) (= (remainder x 2) 0))
+  (define (double x) (+ x x))
+  (define (halve x) (/ x 2))
+  (cond ((= b 0) 0)
+        ((= b 1) a)
+        ((even? b) (mul (double a) (halve b)))
+        (else (+ a (mul a (- b 1))))))
+
+(mul 31 12)
+
+;; Exercise 1.8
+;; Fast multiplication with iteration
+(define (mul-i x y)
+  (define (even? x) (= (remainder x 2) 0))
+  (define (double x) (+ x x))
+  (define (halve x) (/ x 2))
+  (define (mul-iter a b n)
+    (cond ((= n 0) 0)
+          ((= n 1) (+ a b))
+          ((even? n) (mul-iter a (double b) (halve n)))
+          (else (mul-iter (+ a b) b (- n 1)))))
+  (mul-iter 0 x y))
+ 
+(mul-i 31 13)
+
+;; Exercise 1.19
+;; Fib-iter
+(define (fib n)
+  (define (even? x) (= (remainder x 2) 0))
+  (define (halve x) (/ x 2))
+  (define (square x) (* x x))
+  (define (fib-iter a b p q count)
+    (cond ((= count 0) b)
+          ((even? count)
+           (fib-iter a
+                     b
+                     (+ (square p) (square q))
+                     (+ (* 2 p q) (square q))
+                     (halve count)))
+          (else
+           (fib-iter (+ (* b q) (* a q) (* a p))
+                     (+ (* b p) (* a q))
+                     p
+                     q
+                     (- count 1)))))
+  (fib-iter 1 0 0 1 n))
+
+(fib 200)
+
