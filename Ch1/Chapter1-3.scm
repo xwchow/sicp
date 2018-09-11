@@ -105,6 +105,80 @@
 
 (print (product-coprimes 10))
 
-  
+;; Exercise 1.34
+(define (f g)
+  (g 2))
 
+;; (2 2) is a type error
+
+;; Exercise 1.35
+(define tolerance 0.00001)
+(define (fixed-point f first-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2))
+       tolerance))
+  (define (try guess)
+    (let ((next (f guess)))
+      (if (close-enough? guess next)
+          next
+          (try next))))
+  (try first-guess))
+
+(fixed-point (lambda (x) (+ 1 (/ 1 x))) 1.0)
+
+;; Exercise 1.36
+(define (fixed-point f first-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2))
+       tolerance))
+  (define (try guess)
+    (print guess)
+    (let ((next (f guess)))
+      (if (close-enough? guess next)
+          next
+          (try next))))
+  (try first-guess))
   
+(fixed-point (lambda (x) (/ (log 1000) (log x))) 2.0) ;; 34 iterations
+(fixed-point (lambda (x) (* 0.5 (+ x (/ (log 1000) (log x))))) 2.0) ;; 10 iterations
+
+;; Exercise 1.37
+(define (cont-frac n d k)
+  (define (rec i)
+    (if (= i k)
+        (/ (n i) (d i))
+        (/ (n i) (+ (d i)
+                    (rec (1+ i))))))
+  (rec 1))
+
+(cont-frac (lambda (i) 1.0)
+           (lambda (i) 1.0)
+           11)
+
+;; have to generate in reverse 
+(define (cont-frac n d k)
+  (define (iter i result)
+    (if (= i 0)
+        result
+        (iter (1- i) (/ (n i)
+                        (+ (d i)
+                           result)))))
+  (iter k 0))
+
+;; Exercise 1.38
+(+ 2 (cont-frac (lambda (i) 1.0)
+                (lambda (i) (if (= 2 (remainder i 3))
+                                (* (+ i 1) (/ 2 3))
+                                1.0))
+                20))
+
+;; Exercise 1.39
+(define (tan-cf x k)
+  (cont-frac (lambda (i) (if (= i 1)
+                             x
+                             (- (square x))))
+             (lambda (i) (1- (* 2 i)))
+             k))
+
+(tan-cf 0.5 20)
+(tan-cf 0.75 20)

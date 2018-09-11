@@ -4,8 +4,7 @@
             print
             divides?
             smallest-divisor
-            prime?
-            gcd))
+            prime?))
 
 (define (square x) (* x x))
 (define (cube x) (* x x x))
@@ -25,13 +24,4 @@
   (if (< n 2)
       #f
       (= n (smallest-divisor n))))
-
-(define (gcd a b)
-  (if (= b 0)
-      a
-      (gcd b (remainder a b))))
-
-
-
-
 
