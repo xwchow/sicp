@@ -4,7 +4,8 @@
             print
             divides?
             smallest-divisor
-            prime?))
+            prime?
+            average))
 
 (define (square x) (* x x))
 (define (cube x) (* x x x))
@@ -25,3 +26,5 @@
       #f
       (= n (smallest-divisor n))))
 
+(define (average x y)
+  (/ (+ x y) 2))

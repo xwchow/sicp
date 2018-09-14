@@ -132,7 +132,6 @@
     (< (abs (- v1 v2))
        tolerance))
   (define (try guess)
-    (print guess)
     (let ((next (f guess)))
       (if (close-enough? guess next)
           next
@@ -182,3 +181,131 @@
 
 (tan-cf 0.5 20)
 (tan-cf 0.75 20)
+
+;; Exercise 1.40
+(define (average-damp f)
+  (lambda (x)
+    (average x (f x))))
+
+(define (sqrt x)
+  (fixed-point
+   (average-damp
+    (lambda (y) (/ x y)))
+   1.0))
+
+(sqrt 42)
+
+(define (deriv g)
+  (define dx 0.00001)
+  (lambda (x)
+    (/ (- (g (+ x dx)) (g x))
+       dx)))
+
+(define (newton-transform g)
+  (lambda (x)
+    (- x (/ (g x)
+            ((deriv g) x)))))
+
+(define (newtons-method g guess)
+  (fixed-point (newton-transform g)
+               guess))
+
+(define (cubic a b c)
+  (lambda (x)
+    (+ (cube x)
+       (* a (square x))
+       (* b x)
+       c)))
+
+;; Exercise 1.41
+(define (double f)
+  (lambda (x)
+    (f (f x))))
+
+
+(((double (double double)) 1+) 5) ;; (2^2)^2
+(((double (double (double double))) 1+) 5) ;; ((2^2)^2)^2
+
+;; Exercise 1.42
+(define (compose f g)
+  (lambda (x)
+    (f (g x))))
+
+((compose square 1+) 6)
+
+;; Exercise 1.43
+(define (repeated f k)
+  (if (= k 1)
+      f
+      (compose f (repeated f (1- k)))))
+
+((repeated square 2) 5)
+
+;; Exercise 1.44
+(define (smooth f)
+  (define dx 0.00001)
+  (lambda (x)
+    (/ (+ (f (- x dx))
+          (f x)
+          (f (+ x dx)))
+       3)))
+
+(define (smooth-n-fold f n)
+  ((repeated smooth n) f))
+
+((smooth-n-fold square 10) 3)
+
+;; Exercise 1.45
+(define (log2 n)
+  (if (<= n 2)
+      1
+      (1+ (log2 (/ n 2)))))
+
+(define (nth-root x n)
+  (fixed-point
+   ((repeated average-damp (log2 n))
+    (lambda (y)
+      (/ x (expt y (1- n)))))
+   1.0))
+
+(print (nth-root 5021 200))
+
+;; Exercise 1.46
+(define (iterative-improve good-enough? improve)
+  (define (iter guess)
+    (if (good-enough? guess)
+        guess
+        (iter (improve guess))))
+  (lambda (guess)
+    (iter guess)))
+
+
+(define (sqrt x)
+  (define (good-enough? guess x)
+    (< (abs (- (square guess) x)) 0.001))
+  (define (improve guess x)
+    (average guess (/ x guess)))
+  ((iterative-improve
+   (lambda (guess)
+     (good-enough? guess x))
+   (lambda (guess)
+     (improve guess x)))
+  1.0))
+
+(print (sqrt 9))
+
+(define (fixed-point f first-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2)) 
+       0.001))
+  ((iterative-improve
+   (lambda (guess)
+     (close-enough? guess (f guess)))
+   (lambda (guess)
+     (f guess)))
+   first-guess))
+
+(print (fixed-point cos 1.0))
+(print (fixed-point (lambda (y) (+ (sin y) (cos y)))
+                    1.0))
+
