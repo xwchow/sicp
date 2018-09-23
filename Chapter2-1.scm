@@ -105,3 +105,87 @@
     (lambda (x)
       ((a f) ((b f) x)))))
 
+;; Exercise 2.7
+(define (make-interval a b) (cons a b))
+(define (upper-bound ival) (cdr ival))
+(define (lower-bound ival) (car ival))
+
+;; Exercise 2.8
+(define (sub-interval x y)
+  (make-interval (- (lower-bound x) (upper-bound y))
+                 (- (upper-bound x) (lower-bound y))))
+
+;; Exercise 2.10
+(define (mul-interval x y)
+  (let ((p1 (* (lower-bound x) (lower-bound y)))
+        (p2 (* (lower-bound x) (upper-bound y)))
+        (p3 (* (upper-bound x) (lower-bound y)))
+        (p4 (* (upper-bound x) (upper-bound y))))
+    (make-interval (min p1 p2 p3 p4)
+                   (max p1 p2 p3 p4))))
+(define (within ival x)
+  (and (<= x (upper-bound ival))
+       (>= x (lower-bound ival))))
+(define (div-interval x y)
+  (if (within y 0)
+      (error "interval spans zero" y)
+      (mul-interval x
+                    (make-interval (/ 1.0 (upper-bound y))
+                                   (/ 1.0 (lower-bound y))))))
+
+(define span (make-interval -1 1))
+;; (div-interval (make-interval 3 5) span)
+
+;; Exercise 2.11
+(define (mul-interval-2 x y)
+  (let ((x1 (lower-bound x))
+        (x2 (upper-bound x))
+        (y1 (lower-bound y))
+        (y2 (upper-bound y)))
+    (cond ((< (upper-bound x) 0)
+           (cond ((< (upper-bound y) 0)
+                  (make-interval (* x2 y2) (* x1 y1)))
+                 ((> (lower-bound y) 0)
+                  (make-interval (* x1 y2) (* x2 y1)))
+                 (else
+                  (make-interval (* x1 y2) (* x1 y1)))))
+          ((> (lower-bound x) 0)
+           (cond ((< (upper-bound y) 0)
+                  (make-interval (* x2 y1) (* x1 y2)))
+                 ((> (lower-bound y) 0)
+                  (make-interval (* x1 y1) (* x2 y2)))
+                 (else
+                  (make-interval (* x2 y1) (* x2 y2)))))
+          (else
+           (cond ((< (upper-bound y) 0)
+                  (make-interval (* x2 y1) (* x1 y1)))
+                 ((> (lower-bound y) 0)
+                  (make-interval (* x1 y2) (* x2 y2)))
+                 (else
+                  (make-interval (min (* x1 y2) (* x2 y1))
+                                 (max (* x1 y2) (* x2 y2)))))))))
+
+(define neg-span (make-interval -3 -2))
+(define pos-span (make-interval 5 7))
+(define mid-span (make-interval -11 13))
+
+(define (test-mul-interval x y)
+  (define (eq a b)
+    (and (= (lower-bound a) (lower-bound b))
+         (= (upper-bound a) (upper-bound b))))
+  (let ((exp (mul-interval x y))
+        (ans (mul-interval-2 x y)))
+    (if (eq exp ans)
+        #t
+        (error "Failed test. Expected = " exp " Answer = " ans))))
+
+(test-mul-interval neg-span neg-span)
+(test-mul-interval neg-span mid-span)
+(test-mul-interval neg-span pos-span)
+(test-mul-interval mid-span neg-span)
+(test-mul-interval mid-span mid-span)
+(test-mul-interval mid-span pos-span)
+(test-mul-interval pos-span neg-span)
+(test-mul-interval pos-span mid-span)
+(test-mul-interval pos-span pos-span)
+
