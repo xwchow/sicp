@@ -1,3 +1,6 @@
+#!/usr/bin/guile
+!#
+
 (add-to-load-path ".")
 (use-modules (util))
 
@@ -188,4 +191,72 @@
 (test-mul-interval pos-span neg-span)
 (test-mul-interval pos-span mid-span)
 (test-mul-interval pos-span pos-span)
+
+;; Exercise 2.12
+(define (make-center-width c w)
+  (make-interval (- c w) (+ c w)))
+
+(define (center i)
+  (/ (+ (lower-bound i) 
+        (upper-bound i)) 
+     2))
+
+(define (width i)
+  (/ (- (upper-bound i) 
+        (lower-bound i)) 
+     2))
+
+(define (make-center-percent center percent)
+  (let ((width (* (/ percent 100) center)))
+    (make-interval (- center width)
+                   (+ center width))))
+
+(define (percent ival)
+  (* 100 (/ (width ival)
+            (center ival))))
+
+(percent (make-center-percent 10 10))
+
+;; Exercise 2.13
+;; Let the two intervals be (x1 - p1x1, x1 + p1x1) and (x2 - p1x2, x2 + p2x2)
+;; Product gives us (x1x2 - p2x1x2 - p1x1x2 + p1p2x1x2, ...)
+;; Assume p1p2x1x2 is negigible
+;; (x1x2 - (p1 + p2)x1x2, ...)
+;; tolerances are additive
+
+;; Exercise 2.14
+(define (add-interval x y)
+  (make-interval (+ (lower-bound x) 
+                    (lower-bound y))
+                 (+ (upper-bound x) 
+                    (upper-bound y))))
+
+(define (par1 r1 r2)
+  (div-interval
+   (mul-interval r1 r2)
+   (add-interval r1 r2)))
+
+(define (par2 r1 r2)
+  (let ((one (make-interval 1 1 )))
+    (div-interval
+     one
+     (add-interval
+      (div-interval one r1)
+      (div-interval one r2)))))
+
+(define A (make-center-percent 10 0.01))
+(define B (make-center-percent 50 5))
+
+(let ((ival (par1 A A)))
+  (format #f "(~f, ~f)" (center ival) (percent ival)))
+
+(let ((ival (par2 A A)))
+  (format #f "(~f, ~f)" (center ival) (percent ival)))
+
+(let ((ival (par1 B B)))
+  (format #f "(~f, ~f)" (center ival) (percent ival)))
+
+(let ((ival (par2 B B)))
+  (format #f "(~f, ~f)" (center ival) (percent ival)))
+
 
