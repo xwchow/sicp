@@ -259,4 +259,11 @@
 (let ((ival (par2 B B)))
   (format #f "(~f, ~f)" (center ival) (percent ival)))
 
+;; Exercise 2.15
+;; Appears to be true that par2 is better. 
+;; Why? Uncertainty increases as more operations are performed with uncertain intervals.
+;; Imagine repeated multiplications with (R1/R2) * (R2/R1).
+;; Program cannot recognize that a term has been used.
 
+;; Exercise 2.16
+;; Distributivity does not hold. Associativity does not hold.
