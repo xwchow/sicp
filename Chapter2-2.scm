@@ -55,7 +55,51 @@
         list1
         (append (helper x (car list1))
                 (same-parity-list (cdr list1)))))
-  (append (list x) (same-parity-list y)))
+  (cons x (same-parity-list y)))
 
 (same-parity 1 2 3 4 5 6 7)
 (same-parity 2 3 4 5 6 7)
+
+;; Exercise 2.21
+(define (square-list items)
+  (if (null? items)
+      '()
+      (cons (square (car items))
+            (cdr items))))
+
+(define (square-list items)
+  (map square items))
+
+(square-list '(1 2 3 4))
+
+;; Exercise 2.22
+(define (square-list items)
+  (define (iter things answer)
+    (if (null? things)
+        answer
+        (iter (cdr things)
+              (cons (square (car things)) ;; appends to front of list
+                    answer))))
+  (iter items #nil))
+
+(define (square-list items)
+  (define (iter things answer)
+    (if (null? things)
+        answer
+        (iter (cdr things)
+              (cons answer
+                    (square 
+                     (car things)))))) ;; this forms a pair (list, element) instaed of a new list
+  (iter items #nil))
+
+;; Exercise 2.23
+(define (my-for-each proc items)
+  (cond ((null? items)
+         #nil)
+        (else
+         (proc (car items))
+         (my-for-each proc (cdr items)))))
+
+(my-for-each 
+ (lambda (x) (newline) (display x))
+ (list 57 321 88))
