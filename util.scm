@@ -5,7 +5,8 @@
             divides?
             smallest-divisor
             prime?
-            average))
+            average
+            atom))
 
 (define (square x) (* x x))
 (define (cube x) (* x x x))
@@ -28,3 +29,5 @@
 
 (define (average x y)
   (/ (+ x y) 2))
+
+(define (atom x) (not (pair? x)))

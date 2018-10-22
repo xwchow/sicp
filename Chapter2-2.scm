@@ -103,3 +103,103 @@
 (my-for-each 
  (lambda (x) (newline) (display x))
  (list 57 321 88))
+
+;; Exercise 2.24
+(list 1 (list 2 (list 3 4)))
+; => (1 (2 (3 4)))
+
+;; Exercise 2.25
+(define a (list 1 3 (list 5 7) 9))
+(car (cdr (car (cdr (cdr a)))))
+
+(define a (list (list 7)))
+(car (car a))
+
+(define a (list 1 (list 2 (list 3 (list 4 (list 5 (list 6 7)))))))
+(cadr (cadr (cadr (cadr (cadr (cadr a))))))
+
+;; Exercise 2.26
+(define x (list 1 2 3))
+(define y (list 4 5 6))
+
+(append x y)
+(cons x y)
+(list x y)
+
+;; Exercise 2.27
+(define x (list (list 1 2) (list 3 4)))
+(my-reverse x)
+(define (deep-reverse x)
+  (cond ((null? x) x)
+        ((not (pair? x)) x)
+        (else (append (deep-reverse (cdr x))
+                      (list (deep-reverse (car x)))))))
+(print (deep-reverse x))
+
+;; Exercise 2.28
+(define x (list (list 1 2) (list 3 4)))
+(define (fringe x)
+  (cond ((null? x) x)
+        ((not (pair? x)) (list x))
+        (else (append (fringe (car x))
+                      (fringe (cdr x))))))
+
+(fringe x)
+(fringe (list x x))
+
+;; Exercise 2.29
+(define (make-mobile left right)
+  (list left right))
+(define (make-branch length structure)
+  (list length structure))
+
+;; a)
+(define (left-branch mobile)
+  (car mobile))
+(define (right-branch mobile)
+  (cadr mobile))
+(define (branch-length branch)
+  (car branch))
+(define (branch-structure branch)
+  (cadr branch))
+
+;; b)
+(define (branch-weight branch)
+  (total-weight (branch-structure branch)))
+(define (total-weight mobile)
+  (if (atom mobile)
+      mobile
+      (+ (branch-weight (left-branch mobile))
+         (branch-weight (right-branch mobile)))))
+
+(define mob1 (make-mobile
+              (make-branch 1 9)
+              (make-branch 3 3)))
+(define mob2 (make-mobile
+              (make-branch 5 mob1)
+              (make-branch 6 7)))
+(total-weight mob2)
+
+;; c)
+(define (torque branch)
+  (* (branch-length branch)
+     (total-weight (branch-structure branch))))
+
+(define (is-balanced-branch branch)
+  (is-balanced (branch-structure branch)))
+
+(define (is-balanced mobile)
+  (if (atom mobile)
+      #t
+      (let ((left (left-branch mobile))
+            (right (right-branch mobile)))
+        (and (is-balanced-branch left)
+             (is-balanced-branch right)
+             (= (torque left)
+                (torque right))))))
+
+(is-balanced mob1)
+(is-balanced mob2)
+
+;; d)
+;; Change cadr to cdr in accessors
