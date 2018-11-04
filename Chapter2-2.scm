@@ -203,3 +203,101 @@
 
 ;; d)
 ;; Change cadr to cdr in accessors
+
+;; Exercise 2.30
+(define (square-tree tree)
+  (cond ((null? tree) #nil)
+        ((atom tree) (square tree))
+        (else (cons (square-tree (car tree))
+                    (square-tree (cdr tree))))))
+
+(define (square-tree-2 tree)
+  (map (lambda (sub-tree)
+         (if (atom sub-tree)
+             (square sub-tree)
+             (square-tree-2 sub-tree)))
+       tree))
+
+(square-tree-2
+ (list 1
+       (list 2 (list 3 4) 5 )
+       (list 6 7)))
+
+;; Exercise 2.31
+(define (tree-map f tree)
+  (map (lambda (sub-tree)
+         (if (atom sub-tree)
+             (f sub-tree)
+             (tree-map f sub-tree)))
+       tree))
+
+(define (square-tree-3 tree) (tree-map square tree))
+
+(square-tree-3
+ (list 1
+       (list 2 (list 3 4) 5 )
+       (list 6 7)))
+
+;; Exercise 2.32
+(define (subsets s)
+  (if (null? s)
+      (list #nil)
+      (let ((fst (car s))
+            (rest (subsets (cdr s))))
+        (append rest (map (lambda (x) (cons fst x))
+                          rest)))))
+
+(subsets (list 1))
+(subsets (list 1 2 3))
+
+;; Exercise 2.33
+(define (map-2 p sequence)
+  (accumulate (lambda (x y) (cons (p x) y))
+              #nil
+              sequence))
+
+(map-2 square (list 1 2 3 4))
+
+(define (append-2 seq1 seq2)
+  (accumulate cons
+              seq2
+              seq1))
+
+(append-2 (list 2 4 6) (list 3 5 7))
+
+(define (length-2 sequence)
+  (accumulate (lambda (x y) (1+ y))
+              0
+              sequence))
+
+(length-2 (list 1 2 4 5))
+
+;; Exercise 2.34
+(define (horner-eval x coeff-sequence)
+  (accumulate (lambda (a b)
+                (+ a (* b x)))
+              0
+              coeff-sequence))
+
+(horner-eval 2 (list 1 3 0 5 0 1))
+
+;; Exercise 2.35
+(define (count-leaves t)
+  (accumulate +
+              0
+              (map (lambda (x)
+                     (if (atom x)
+                         1
+                         (count-leaves x)))
+                   t)))
+
+(count-leaves (list 1 2 (list (list 3 4) 5 (list 6 7 8))))
+
+;; Exercise 2.36
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      #nil
+      (cons (accumulate op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
+
+(accumulate-n + 0 (list (list 2 3 4) (list 5 4 3)))
