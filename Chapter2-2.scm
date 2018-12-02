@@ -27,19 +27,19 @@
   (define (no-more? list1) (null? list1))
   (define (except-first-denomination list1) (cdr list1))
   (define (first-denomination list1) (car list1))
-  (cond ((= amount 0) 
+  (cond ((= amount 0)
          1)
-        ((or (< amount 0) 
-             (no-more? coin-values)) 
+        ((or (< amount 0)
+             (no-more? coin-values))
          0)
         (else
-         (+ (cc 
+         (+ (cc
              amount
-             (except-first-denomination 
+             (except-first-denomination
               coin-values))
-            (cc 
+            (cc
              (- amount
-                (first-denomination 
+                (first-denomination
                  coin-values))
              coin-values)))))
 (cc 100 us-coins)
@@ -88,7 +88,7 @@
         answer
         (iter (cdr things)
               (cons answer
-                    (square 
+                    (square
                      (car things)))))) ;; this forms a pair (list, element) instaed of a new list
   (iter items #nil))
 
@@ -100,7 +100,7 @@
          (proc (car items))
          (my-for-each proc (cdr items)))))
 
-(my-for-each 
+(my-for-each
  (lambda (x) (newline) (display x))
  (list 57 321 88))
 
@@ -301,3 +301,48 @@
             (accumulate-n op init (map cdr seqs)))))
 
 (accumulate-n + 0 (list (list 2 3 4) (list 5 4 3)))
+
+;; Exercise 2.37
+(define M (list '(1 2 3 4) '(4 5 6 6) '(6 7 8 9)))
+(define (dot-product v w)
+  (accumulate +
+              0
+              (map * v w)))
+(define (matrix-*-vector m v)
+   (map (lambda(w)
+          (dot-product w v)) m))
+(define (transpose m)
+  (accumulate-n cons (list) m))
+(transpose M)
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+   (map (lambda(w)
+          (matrix-*-vector cols w)) m)))
+(matrix-*-matrix M (transpose M))
+
+;; Exercise 2.38
+(define fold-right accumulate)
+(define (fold-left op initial sequence)
+  (define (iter result rest)
+    (if (null? rest)
+        result
+        (iter (op result (car rest))
+              (cdr rest))))
+  (iter initial sequence))
+
+(fold-right / 1 (list 1 2 3)) ;; 3/2
+(fold-left / 1 (list 1 2 3)) ;; 1/6
+(fold-right list #nil (list 1 2 3)) ;; (1 (2 (3 #nil)))
+(fold-left list #nil (list 1 2 3)) ;; (((#nil 1) 2) 3)
+;; op should be associative
+
+;; Exercise 2.39
+(define (reverse sequence)
+  (fold-right (lambda(x y)
+                (append y (list x))) '() sequence))
+(define (reverse sequence)
+  (fold-left (lambda(x y)
+               (cons y x)) '() sequence))
+
+(reverse '(1 2 3))
+(reverse '(4 5 6))

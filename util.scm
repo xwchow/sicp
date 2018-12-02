@@ -6,7 +6,8 @@
             smallest-divisor
             prime?
             average
-            atom))
+            atom
+            accumulate))
 
 (define (square x) (* x x))
 (define (cube x) (* x x x))
@@ -31,3 +32,9 @@
   (/ (+ x y) 2))
 
 (define (atom x) (not (pair? x)))
+
+(define (accumulate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+          (accumulate op initial (cdr sequence)))))
