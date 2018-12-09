@@ -1,5 +1,7 @@
 (define-module (util)
-  #:export (square
+  #:export (inc
+            dec
+            square
             cube
             print
             divides?
@@ -7,8 +9,11 @@
             prime?
             average
             atom
-            accumulate))
+            accumulate
+            enumerate-interval))
 
+(define inc 1+)
+(define dec 1-)
 (define (square x) (* x x))
 (define (cube x) (* x x x))
 (define (print x)
@@ -38,3 +43,11 @@
       initial
       (op (car sequence)
           (accumulate op initial (cdr sequence)))))
+
+(define (enumerate-interval low high)
+  (if (> low high)
+      #nil
+      (cons low
+            (enumerate-interval
+             (+ low 1)
+             high))))
