@@ -412,3 +412,42 @@
     (filter (lambda (t)
               (= s (accumulate + 0 t))) triples)))
 (sum-triples 3 7)
+
+;; Exercie 2.42
+(define (queens board-size)
+  ;; The board structure is represented as a list of ints representing
+  ;; the row position and indexed by column position
+  (define empty-board (list))
+  (define (adjoin-position row col positions)
+    (cons row positions))
+  (define (unique? positions)
+    (let ((x (car positions)))
+      ;; Would be nicer if we had an all method.
+      (= 0 (accumulate + 0 (map (lambda (y)
+                                  (if (= x y) 1 0))
+                                (cdr positions))))))
+  (define (safe? col positions)
+    ;; The board is safe if there are no queens in the same row
+    ;; and no queens in the same diagonal (check this by subtracting/adding
+    ;; their individual column index)
+    (and (unique? positions)
+         (unique? (map - positions (reverse (enumerate-interval 1 col))))
+         (unique? (map - positions (enumerate-interval 1 col)))))
+  (define (queen-cols k)
+    (if (= k 0)
+        (list empty-board)
+        (filter
+         (lambda (positions) (safe? k positions))
+         (flatmap
+          (lambda (rest-of-queens)
+            (map (lambda (new-row)
+                   (adjoin-position new-row k rest-of-queens))
+                 (enumerate-interval 1 board-size)))
+          (queen-cols (dec k))))))
+  (queen-cols board-size))
+
+(length (queens 8))
+
+;; Exercise 2.43
+;; queen-cols is called N times for a board-size of N
+;; O(N!) time
