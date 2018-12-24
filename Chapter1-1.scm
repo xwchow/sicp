@@ -117,7 +117,7 @@
   (expt-iter 1 base exp))
 (expt 3 5)
 
-;; Exercise 1.7
+;; Exercise 1.17
 ;; Fast multiplication
 (define (mul a b)
   (define (even? x) (= (remainder x 2) 0))
@@ -130,7 +130,7 @@
 
 (mul 31 12)
 
-;; Exercise 1.8
+;; Exercise 1.18
 ;; Fast multiplication with iteration
 (define (mul-i x y)
   (define (even? x) (= (remainder x 2) 0))
