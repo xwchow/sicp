@@ -9,6 +9,7 @@
             prime?
             average
             atom
+            single?
             accumulate
             enumerate-interval))
 
@@ -37,6 +38,7 @@
   (/ (+ x y) 2))
 
 (define (atom x) (not (pair? x)))
+(define (single? x) (and (pair? x) (nil? (cdr x))))
 
 (define (accumulate op initial sequence)
   (if (null? sequence)
