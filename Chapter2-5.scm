@@ -178,6 +178,8 @@
          (equ? x y)))
   (put '=zero? '(complex)
        (lambda (x) (= (magnitude x) 0)))
+  (put 'project '(complex)
+       (lambda (x) (make-real (real-part x))))
   'done)
 
 (define (make-complex-from-real-imag x y)
@@ -383,13 +385,13 @@
     ;; or #false otherwise.
     (if (null? args)
         '()
-        (let ((arg (car args))
+        (let ((min-arg (car args))
               (rest-args (coerce-args choice (cdr args))))
-          (if (eq? choice (type-tag arg))
-              (if rest-args (cons arg rest-args) #f)
-              (let ((coerce-f (get-coercion (type-tag arg) choice)))
+          (if (eq? choice (type-tag min-arg))
+              (if rest-args (cons min-arg rest-args) #f)
+              (let ((coerce-f (get-coercion (type-tag min-arg) choice)))
                 (if (and coerce-f rest-args)
-                    (cons (coerce-f arg) rest-args)
+                    (cons (coerce-f min-arg) rest-args)
                     #f))))))
 
   (define (helper tags choices args)
@@ -446,6 +448,9 @@
   (put 'raise '(real)
      (lambda (x)
        (real->complex x)))
+  (put 'project '(real)
+       (lambda (x)
+         (make-rat (round x) 1)))
   'done)
 (install-real-package)
 
@@ -481,6 +486,10 @@
   (put 'raise '(rational)
        (lambda (x)
          (rational->real x)))
+  (put 'project '(rational)
+       (lambda (x)
+         (make-int (round (/ (numer x)
+                             (denom x))))))
   'done)
 (install-rational-package)
 
@@ -512,41 +521,123 @@
 ;; Exercise 2.84
 ;; The algorithm implemented here recursively raises the lowest type
 ;; in the hierarchy. If there is a tie for lowest, it raises the
-;; an arbitrary argument of lowest type.
-(define (try-raise args)
-  (define (raise-arg args arg)
-    ;; Precondition: arg must be in args
-    (cond ((null? args) '())
-          ((eq? (car args) arg) (cons (raise arg) (cdr args)))
-          (else (cons (car args) (raise-arg (cdr args) arg)))))
-  (define (raisable a b)
-    (let ((ra (raise a)))
-      (cond ((eq? ra a)) #f
-            ((eq? (type-tag ra) (type-tag b)) #t)
-            (else (raisable ra b)))))
-  (define (lower-arg a b)
-    (if (raisable a b)
-        a
-        b))
-  (define (min-arg args)
-    (define (helper args arg)
-      (if (null? args)
-          arg
-          (helper (cdr args) (lower-arg arg (car args)))))
-    (min-args (cdr args) (car args)))
-  (let ((min-arg (min-type args)))
-    (raise-arg args min-arg)))
+;; an arbitrary argument of lowest type. This also solves the problem
+;; of arguments needing to be converted to a common superclass.
+(define (can-be-raised? a)
+  (not (equal? a (raise a))))
+
+(can-be-raised? (make-int 3))
+(can-be-raised? (make-complex-from-real-imag 3 4))
+
+(define (compare-types a b)
+  ;; Returns true if a can be raised into the same type as b.
+  (cond ((eq? (type-tag a) (type-tag b)) #t)
+        ((not (can-be-raised? a)) #f)
+        (else (compare-types (raise a) b))))
+
+(compare-types (make-int 3) (make-complex-from-real-imag 3 4))
+(compare-types (make-int 3) (make-rat 3 4))
+(compare-types (make-rat 3 4) (make-int 3))
+
+(define (lower-arg a b)
+  (if (compare-types a b)
+      a
+      b))
+
+(define (get-min-arg args)
+  (define (helper args min-arg)
+    (if (null? args)
+        min-arg
+        (helper (cdr args) (lower-arg min-arg (car args)))))
+  (helper (cdr args) (car args)))
+
+(get-min-arg (list (make-int 3) (make-rat 3 4) (make-complex-from-real-imag 3 4)))
+(get-min-arg (list (make-rat 3 4) (make-int 3) (make-complex-from-real-imag 3 4)))
+
+(define (raise-min-arg args)
+  ;; Returns a list of args with the arg with the lowest type raised once.
+  ;; Returns false if the lowest type cannot be raised.
+  (define (raise-arg args min-arg)
+    (cond ((null? args) (error "min-arg not found in args"
+                               (list min-arg args)))
+          ((equal? (car args) min-arg)
+           (cons (raise min-arg) (cdr args)))
+          (else (cons (car args) (raise-arg (cdr args) min-arg)))))
+
+  (let ((min-arg (get-min-arg args)))
+    (if (can-be-raised? min-arg)
+        (raise-arg args min-arg)
+        #f)))
+
+(raise-min-arg
+ (raise-min-arg
+  (raise-min-arg
+   (raise-min-arg
+    (raise-min-arg
+     (raise-min-arg
+      (list
+       (make-int 3)
+       (make-rat 3 4)
+       (make-complex-from-real-imag 3 4))))))))
 
 (define (apply-generic op . args)
   (let ((type-tags (map type-tag args)))
     (let ((proc (get op type-tags)))
       (if proc
           (apply proc (map contents args))
-          (if (>= (length args) 2)
-              (let ((new-args (try-raise args)))
-                (if (new-args)
-                    (apply-generic op (try-raise args))
-                    (error-out op type-tags)))
-              (error-out op type-tags))))))
+          (let ((new-args (raise-min-arg args)))
+            (if new-args
+                (apply apply-generic op new-args)
+                (error-out op type-tags)))))))
+
+;; Test
+(add-three
+ (make-int 1) (make-rat 3 4) (make-real 2.5)) ;; (complex rectangular 4.25 . 0)
+
+;; Exercise 2.85
+(define (project arg)
+  (if (eq? (type-tag arg) 'integer)
+      arg
+      (apply-generic 'project arg)))
+
+(project (make-complex-from-real-imag 3 4))
+(project (make-real 3.5))
+(project (make-rat 3 4))
+
+(define (can-project? x)
+  (equal? x (raise (project x))))
+
+(can-project? (make-complex-from-real-imag 3 4));; #f
+(can-project? (make-complex-from-real-imag 3 0));; #t
+(can-project? (make-real 3.5)) ;; #f
+(can-project? (make-real 3.0)) ;; #t
+(can-project? (make-rat 1 2)) ;; #f
+(can-project? (make-rat 1 1)) ;; #t
+(can-project? (make-int 1)) ;; #t
+
+(define (drop x)
+  (if (can-project? x)
+      (drop (project x))
+      x))
+
+(drop (make-complex-from-real-imag 1.5 0)) ;; (real . 1.5)
+(drop (make-complex-from-real-imag 1 0)) ;;  (integer . 1)
+(drop (make-complex-from-real-imag 2 3)) ;;  (complex rectangular 2 . 3)
+
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+          (drop (apply proc (map contents args)))
+          (let ((new-args (raise-min-arg args)))
+            (if new-args
+                (apply apply-generic op new-args)
+                (error-out op type-tags)))))))
+
+;; Exercise 2.86
+;; Not implementing this here but this should not be difficult.
+;; We just need to install the generic operations for sine/cosine/square etc
+;; and implement them in each package which would be used to make
+;; up a complex number.
 
 
