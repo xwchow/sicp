@@ -178,7 +178,7 @@
          (equ? x y)))
   (put '=zero? '(complex)
        (lambda (x) (= (magnitude x) 0)))
-  (put 'project '(complex)
+  (put 'project 'complex
        (lambda (x) (make-real (real-part x))))
   'done)
 
@@ -212,7 +212,7 @@
 ;; For purposes of testing 2.82
 (define (add-three a b c)
   (apply-generic 'add-three a b c))
-(define (real-part z) 
+(define (real-part z)
   (apply-generic 'real-part z))
 (define (imag-part z) 
   (apply-generic 'imag-part z))
@@ -433,7 +433,7 @@
 (define (raise x)
   (if (eq? (type-tag x) 'complex)
       x
-      (apply-generic 'raise x)))
+      ((get 'raise (type-tag x)) (contents x))))
 
 ;; real
 (define (install-real-package)
@@ -445,10 +445,10 @@
     (attach-tag 'real x))
   (put 'make-real 'real
        (lambda (x) (tag x)))
-  (put 'raise '(real)
+  (put 'raise 'real
      (lambda (x)
        (real->complex x)))
-  (put 'project '(real)
+  (put 'project 'real
        (lambda (x)
          (make-rat (round x) 1)))
   'done)
@@ -483,10 +483,10 @@
          (equ? x y)))
   (put '=zero? '(rational)
        (lambda (x) (= (numer x) 0)))
-  (put 'raise '(rational)
+  (put 'raise 'rational
        (lambda (x)
          (rational->real x)))
-  (put 'project '(rational)
+  (put 'project 'rational
        (lambda (x)
          (make-int (round (/ (numer x)
                              (denom x))))))
@@ -506,7 +506,7 @@
     (attach-tag 'integer x))
   (put 'make-int 'integer
        (lambda (x) (tag x)))
-  (put 'raise '(integer)
+  (put 'raise 'integer
      (lambda (x)
        (integer->rational x)))
   'done)
@@ -526,8 +526,8 @@
 (define (can-be-raised? a)
   (not (equal? a (raise a))))
 
-(can-be-raised? (make-int 3))
-(can-be-raised? (make-complex-from-real-imag 3 4))
+(can-be-raised? (make-int 3)) ;; #t
+(can-be-raised? (make-complex-from-real-imag 3 4));; #f
 
 (define (compare-types a b)
   ;; Returns true if a can be raised into the same type as b.
@@ -535,9 +535,9 @@
         ((not (can-be-raised? a)) #f)
         (else (compare-types (raise a) b))))
 
-(compare-types (make-int 3) (make-complex-from-real-imag 3 4))
-(compare-types (make-int 3) (make-rat 3 4))
-(compare-types (make-rat 3 4) (make-int 3))
+(compare-types (make-int 3) (make-complex-from-real-imag 3 4)) ;; #t
+(compare-types (make-int 3) (make-rat 3 4)) ;; #t
+(compare-types (make-rat 3 4) (make-int 3)) ;; #f
 
 (define (lower-arg a b)
   (if (compare-types a b)
@@ -596,16 +596,24 @@
 
 ;; Exercise 2.85
 (define (project arg)
-  (if (eq? (type-tag arg) 'integer)
-      arg
-      (apply-generic 'project arg)))
+  ;; Returns the projected arg if there is a projection.
+  ;; False otherwise.
+  (if (pair? arg)
+      (let ((proj (get 'project (type-tag arg))))
+        (if proj
+            (proj (contents arg))
+            #f))
+      #f))
 
+(real-part (make-complex-from-real-imag 3 4))
 (project (make-complex-from-real-imag 3 4))
 (project (make-real 3.5))
 (project (make-rat 3 4))
 
 (define (can-project? x)
-  (equal? x (raise (project x))))
+  (if (project x)
+      (equal? x (raise (project x)))
+      #f))
 
 (can-project? (make-complex-from-real-imag 3 4));; #f
 (can-project? (make-complex-from-real-imag 3 0));; #t
@@ -625,19 +633,19 @@
 (drop (make-complex-from-real-imag 2 3)) ;;  (complex rectangular 2 . 3)
 
 (define (apply-generic op . args)
-  (let ((type-tags (map type-tag args)))
-    (let ((proc (get op type-tags)))
-      (if proc
-          (drop (apply proc (map contents args)))
-          (let ((new-args (raise-min-arg args)))
-            (if new-args
-                (apply apply-generic op new-args)
-                (error-out op type-tags)))))))
+  (define (helper op . args)
+    (let ((type-tags (map type-tag args)))
+      (let ((proc (get op type-tags)))
+        (if proc
+            (apply proc (map contents args))
+            (let ((new-args (raise-min-arg args)))
+              (if new-args
+                  (apply helper op new-args)
+                  (error-out op type-tags)))))))
+  (drop (apply helper op args)))
 
-;; Exercise 2.86
+ ;; Exercise 2.86
 ;; Not implementing this here but this should not be difficult.
 ;; We just need to install the generic operations for sine/cosine/square etc
 ;; and implement them in each package which would be used to make
 ;; up a complex number.
-
-
