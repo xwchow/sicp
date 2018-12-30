@@ -123,6 +123,8 @@
 ;; Generic selectors
 (define (add a b)
   (apply-generic 'add a b))
+(define (mul a b)
+  (apply-generic 'mul a b))
 (define (add-triple a b c)
   (apply-generic 'add-triple a b c))
 (define (real-part z) 
@@ -137,6 +139,8 @@
   (apply-generic 'equ? a b))
 (define (=zero? x)
   (apply-generic '=zero? x))
+(define (neg x)
+  (apply-generic 'neg x))
 
 ;; helper constructor methods
 (define (make-int x)

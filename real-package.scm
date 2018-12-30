@@ -6,10 +6,15 @@
     (make-complex-from-real-imag x 0))
   (define (add x y)
     (+ x y))
+  (define (mul x y)
+    (* x y))
+  (define (neg x)
+    (- x))
   ;; interface
   (put 'add '(real real)
-       (lambda (x y)
-         (add x y)))
+       add)
+  (put 'mul '(real real)
+       mul)
   (put 'make-real 'real
        (lambda (x) x))
   (put 'raise 'real
@@ -18,6 +23,8 @@
   (put 'project 'real
        (lambda (x)
          (make-rat (round x) 1)))
+  (put 'neg '(real)
+       neg)
   'done)
 
 (install-real-package)
