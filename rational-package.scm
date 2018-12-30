@@ -16,8 +16,7 @@
        (lambda (a b)
          (tag (make-rat a b))))
   (put 'equ? '(rational rational)
-       (lambda (x y)
-         (equ? x y)))
+       equ?)
   (put '=zero? '(rational)
        (lambda (x) (= (numer x) 0)))
   (put 'raise 'rational
@@ -30,6 +29,3 @@
   'done)
 
 (install-rational-package)
-
-(define (make-rat a b)
-  ((get 'make-rat 'rational) a b))

@@ -4,6 +4,8 @@
 (add-to-load-path ".")
 (use-modules (util))
 
+(define EPS 1e-8)
+
 ;; Let's define our own put and get functions here so we can test our code.
 (define env (make-hash-table))
 (define (put op type-tags f)
@@ -21,16 +23,16 @@
   (cons type-tag contents))
 
 (define (type-tag datum)
-  (if (pair? datum)
-      (car datum)
-      (error "Bad tagged datum: 
-              TYPE-TAG" datum)))
+  (cond ((pair? datum) (car datum))
+        ((number? datum) 'real)
+        (else (error "Bad tagged datum: 
+              TYPE-TAG" datum))))
 
 (define (contents datum)
-  (if (pair? datum)
-      (cdr datum)
-      (error "Bad tagged datum: 
-              CONTENTS" datum)))
+  (cond ((pair? datum) (cdr datum))
+        ((number? datum) datum)
+        (else (error "Bad tagged datum: 
+              CONTENTS" datum))))
 
 ;; Internal methods
 (define (error-out op type-tags)
@@ -40,7 +42,8 @@
 (define (raise arg)
   ;; Returns the raised arg if there is a projection.
   ;; False otherwise.
-  (if (pair? arg)
+  (if (or (number? arg)
+          (and (pair? arg) (symbol? (type-tag arg))))
       (let ((rs (get 'raise (type-tag arg))))
         (if rs
             (rs (contents arg))
@@ -83,7 +86,8 @@
 (define (project arg)
   ;; Returns the projected arg if there is a projection.
   ;; False otherwise.
-  (if (pair? arg)
+  (if (or (number? arg)
+          (and (pair? arg) (symbol? (type-tag arg))))
       (let ((proj (get 'project (type-tag arg))))
         (if proj
             (proj (contents arg))
@@ -101,6 +105,9 @@
       x))
 
 ;; apply-generic which performs iterative raising and drops the final result.
+;; This implementation omits dropping the result because it requires
+;; that we implement the operators used in the complex-package
+;; in the rational and integer packages.
 (define (apply-generic op . args)
   (define (helper op . args)
     (let ((type-tags (map type-tag args)))
@@ -111,7 +118,7 @@
               (if new-args
                   (apply helper op new-args)
                   (error-out op type-tags)))))))
-  (drop (apply helper op args)))
+  (apply helper op args))
 
 ;; Generic selectors
 (define (add a b)
@@ -131,6 +138,18 @@
 (define (=zero? x)
   (apply-generic '=zero? x))
 
+;; helper constructor methods
+(define (make-int x)
+  ((get 'make-int 'integer) x))
+(define (make-rat a b)
+  ((get 'make-rat 'rational) a b))
+(define (make-real x)
+  ((get 'make-real 'real) x))
+(define (make-complex-from-real-imag x y)
+  ((get 'make-from-real-imag 'complex) x y))
+(define (make-complex-from-mag-ang r a)
+  ((get 'make-from-mag-ang 'complex) r a))
+
 (define (install-packages)
   (load "integer-package.scm")
   (load "complex-package.scm")
@@ -141,17 +160,38 @@
 ;; ==============
 ;; | Test Suite |
 ;; ==============
+(define (close-enough? a b)
+  (< (abs (- a b)) EPS))
+
+;; real
 (if (equal?
-     (drop (make-complex-from-real-imag 1.5 0))
-     (make-real 1.5))
+     (raise (make-real 3.5))
+     (make-complex-from-real-imag 3.5 0))
     #t
-    (error "(drop (make-complex-from-real-imag 1.5 0)"))
+    (error "(raise (make-real 3.5))"))
 
 (if (equal?
-     (drop (make-complex-from-real-imag 1 0))
-     (make-int 1))
+     (drop (make-real 3.0))
+     (make-int 3.0))
     #t
-    (error "(drop (make-complex-from-real-imag 1 0))"))
+    (error "(drop (make-real 3.0))"))
+
+(if (close-enough? (add (make-real 3.2) (make-real 5.4)) 8.6)
+      #t
+      (error "(add (make-real 3.2) (make-real 5.4))"))
+
+(if (close-enough?
+     (add 3.2 5.4)
+     8.6)
+    #t
+    (error "(add (make-real 3.2) (make-real 5.4))"))
+
+;; complex
+(if (close-enough?
+     (drop (make-complex-from-real-imag 1.5 0))
+     1.5)
+    #t
+    (error "(drop (make-complex-from-real-imag 1.5 0)"))
 
 (if (equal?
      (drop (make-complex-from-real-imag 2 3))
@@ -159,8 +199,10 @@
     #t
     (error "(drop (make-complex-from-real-imag 2 3))"))
 
+;; apply-generic
 (if (equal?
      (add-triple (make-rat 3 4) (make-int 4) (make-complex-from-real-imag 3 4))
      (make-complex-from-real-imag (/ 31 4) 4))
     #t
     (error "(add-triple (make-rat 3 4) (make-int 4) (make-complex-from-real-imag 3 4))"))
+

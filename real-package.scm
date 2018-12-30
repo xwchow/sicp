@@ -1,12 +1,17 @@
+;; real numbers are represented as scheme numbers directly
+;; without the 'real tag
 (define (install-real-package)
   ;; internal
   (define (real->complex x)
     (make-complex-from-real-imag x 0))
+  (define (add x y)
+    (+ x y))
   ;; interface
-  (define (tag x)
-    (attach-tag 'real x))
+  (put 'add '(real real)
+       (lambda (x y)
+         (add x y)))
   (put 'make-real 'real
-       (lambda (x) (tag x)))
+       (lambda (x) x))
   (put 'raise 'real
      (lambda (x)
        (real->complex x)))
@@ -16,6 +21,3 @@
   'done)
 
 (install-real-package)
-
-(define (make-real x)
-  ((get 'make-real 'real) x))

@@ -118,8 +118,7 @@
   (put 'magnitude '(complex) magnitude)
   (put 'angle '(complex) angle)
   (put 'equ? '(complex complex)
-       (lambda (x y)
-         (equ? x y)))
+       equ?)
   (put '=zero? '(complex)
        (lambda (x) (= (magnitude x) 0)))
   (put 'project 'complex
@@ -127,8 +126,3 @@
   'done)
 
 (install-complex-package)
-
-(define (make-complex-from-real-imag x y)
-  ((get 'make-from-real-imag 'complex) x y))
-(define (make-complex-from-mag-ang r a)
-  ((get 'make-from-mag-ang 'complex) r a))
