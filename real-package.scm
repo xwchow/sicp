@@ -8,6 +8,8 @@
     (+ x y))
   (define (mul x y)
     (* x y))
+  (define (div x y)
+     (/ x y))
   (define (neg x)
     (- x))
   ;; interface
@@ -15,6 +17,8 @@
        add)
   (put 'mul '(real real)
        mul)
+  (put 'div '(real real)
+       div)
   (put 'make-real 'real
        (lambda (x) x))
   (put 'raise 'real

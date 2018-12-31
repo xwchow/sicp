@@ -1,9 +1,31 @@
 #!/usr/bin/guile
 !#
 
+(define-module (arithmetic-package)
+  #:export (apply-generic
+            attach-tag
+            type-tag
+            contents
+            put
+            get
+            add
+            mul
+            div
+            add-triple
+            real-part
+            imag-part
+            angle
+            equ?
+            =zero?
+            neg
+            make-int
+            make-rat
+            make-real
+            make-complex-from-real-imag
+            make-complex-from-mag-ang))
+
 (add-to-load-path ".")
 (use-modules (util))
-
 (define EPS 1e-8)
 
 ;; Let's define our own put and get functions here so we can test our code.
@@ -125,6 +147,8 @@
   (apply-generic 'add a b))
 (define (mul a b)
   (apply-generic 'mul a b))
+(define (div a b)
+  (apply-generic 'div a b))
 (define (add-triple a b c)
   (apply-generic 'add-triple a b c))
 (define (real-part z) 
