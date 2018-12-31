@@ -2,6 +2,9 @@
   ;; internal procedures
   (define (numer r) (car r))
   (define (denom r) (cdr r))
+  (define (add a b)
+    (make-rat (add (numer a) (numer b))
+              (add (denom a) (denom b))))
   (define (rational->real r)
     (make-real (/ (numer r) (denom r))))
   (define (make-rat n d)
@@ -12,6 +15,9 @@
   ;; interface
   (define (tag x)
     (attach-tag 'rational x))
+  (put 'add 'rational
+       (lambda (a b)
+         (tag (add a b))))
   (put 'make-rat 'rational
        (lambda (a b)
          (tag (make-rat a b))))

@@ -11,6 +11,7 @@
             add
             mul
             div
+            gcd
             add-triple
             real-part
             imag-part
@@ -165,6 +166,8 @@
   (apply-generic '=zero? x))
 (define (neg x)
   (apply-generic 'neg x))
+(define (gcd x y)
+  (apply-generic 'gcd x y))
 
 ;; helper constructor methods
 (define (make-int x)

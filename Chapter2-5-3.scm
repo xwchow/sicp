@@ -233,7 +233,6 @@
   ;; Also, if the dividend ever becomes zero, return zero as both quotient
   ;; and remainder.
   (define (div-terms L1 L2)
-    (print (list "div-terms" L1 L2))
     (if (empty-termlist? L1)
         (list L1 L1)
         (let ((t1 (first-term L1))
@@ -244,13 +243,10 @@
                                 (coeff t2)))
                     (new-o (- (order t1) 
                               (order t2))))
-                (print (list "new-co" new-c new-o))
                 (let ((mul-result-divisor (mul-term-by-all-terms
                                            (make-term new-o new-c)
                                            L2)))
-                  (print (list "mul-result-divisor" mul-result-divisor))
                   (let ((new-L1 (add-terms L1 (neg-terms mul-result-divisor))))
-                    (print (list "new-L1" new-L1))
                     (let ((rest-of-result (div-terms new-L1 L2)))
                       (list (adjoin-term
                              (make-term new-o new-c)
@@ -266,6 +262,26 @@
                     (term-list p2)))
         (error "Polys not in same var:
               MUL-POLY"
+               (list p1 p2))))
+
+  ;; =======
+  ;; | GCD |
+  ;; =======
+  (define (remainder-terms L1 L2)
+    (cadr (div-terms L1 L2)))
+  (define (gcd-terms L1 L2)
+    (if (empty-termlist? L2)
+        L1
+        (gcd-terms L2 (remainder-terms L1 L2))))
+  (define (gcd-poly p1 p2)
+    (if (same-variable? (variable p1)
+                        (variable p2))
+        (make-poly
+         (variable p1)
+         (gcd-terms (term-list p1)
+                    (term-list p2)))
+        (error "Polys not in same var:
+              GCD-POLY"
                (list p1 p2))))
 
   ;; =======
@@ -316,6 +332,9 @@
   (put 'neg '(polynomial)
        (lambda (p)
          (tag (neg-polynomial p))))
+  (put 'gcd '(polynomial polynomial)
+       (lambda (p1 p2)
+         (tag (gcd-poly p1 p2))))
   'done)
 
 (install-polynomial-package)
@@ -410,4 +429,78 @@
                  (make-dense-term-list '(1 0 -1))))
 (div dividend divisor)
 
+;; Exercise 2.92
+;; TODO
+
+;; Exercise 2.93
+;; Use Rational instead of Rational to avoid conflicts with Rational package.
+(define (install-rational-package)
+  ;; internal procedures
+  (define (numer r) (car r))
+  (define (denom r) (cdr r))
+  (define (add-rational a b)
+    (make-rat (add (mul (numer a) (denom b))
+                   (mul (numer b) (denom a)))
+              (mul (denom a) (denom b))))
+  (define (rational->real r)
+    (make-real (/ (numer r) (denom r))))
+  (define (make-rat n d)
+    (cons n d))
+  (define (equ? r1 r2)
+    (= (* (numer r1) (denom r2))
+       (* (denom r1) (numer r2))))
+  ;; interface
+  (define (tag x)
+    (attach-tag 'Rational x))
+  (put 'add '(Rational Rational)
+       (lambda (a b)
+         (tag (add-rational a b))))
+  (put 'make-rat 'Rational
+       (lambda (a b)
+         (tag (make-rat a b))))
+  (put 'equ? '(Rational Rational)
+       equ?)
+  (put '=zero? '(Rational)
+       (lambda (x) (= (numer x) 0)))
+  'done)
+(install-rational-package)
+(define (make-rational a b)
+  ((get 'make-rat 'Rational) a b))
+
+(define p1 (make-polynomial 'x (make-sparse-term-list '((1 2) (0 1)))))
+(define p2 (make-polynomial 'x (make-sparse-term-list '((1 3) (0 1)))))
+(define rf (make-rational p2 p1))
+(add rf rf)
+;; (Rational (polynomial x sparse (2 12) (1 10) (0 2))
+;;            polynomial x sparse (2 4) (1 4) (0 1))
+
+;; Exercise 2.94
+(define p1 
+  (make-polynomial 
+   'x (make-sparse-term-list '((4 1) (3 -1) (2 -2) (1 2)))))
+
+(define p2 
+  (make-polynomial 
+   'x (make-sparse-term-list '((3 1) (1 -1)))))
+
+(gcd p1 p2) ;; (polynomial x sparse (2 -1) (1 1))
+
+;; Exercise 2.95
+(define p1
+  (make-polynomial
+   'x (make-dense-term-list '(1 -2 1))))
+(define p2
+  (make-polynomial
+   'x (make-dense-term-list '(11 0 7))))
+(define p3
+  (make-polynomial
+   'x (make-dense-term-list '(13 5))))
+
+(define q1 (mul p1 p2))
+(define q2 (mul p1 p3))
+(gcd q1 q2) ;;  (polynomial x dense 1458/169 -2916/169 1458/169)
+;; Different from p1 but since the degree is the same, both are equally
+;; valid gcds. Why does this happen? Looks like it gets multipled by the
+;; gcd of p2 and p3.
+(gcd p2 p3) ;; (polynomial x dense 1458/169)
 

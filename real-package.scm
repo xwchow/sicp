@@ -12,6 +12,10 @@
      (/ x y))
   (define (neg x)
     (- x))
+  (define (gcd x y)
+    (if (= y 0)
+        x
+        (gcd y (remainder x y))))
   ;; interface
   (put 'add '(real real)
        add)
