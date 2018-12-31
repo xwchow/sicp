@@ -181,9 +181,13 @@
          (variable p1)
          (add-terms (term-list p1)
                     (term-list p2)))
-        (error "Polys not in same var:
-              ADD-POLY"
-               (list p1 p2))))
+        (let ((p1->string (symbol->string (variable p1)))
+              (p2->string (symbol->string (variable p2))))
+          (if (string<? p1->string p2->string)
+              (add-poly p1 (make-poly (variable p1)
+                                      (make-dense-term-list (list (tag p2)))))
+              (add-poly p2 (make-poly (variable p2)
+                                      (make-dense-term-list (list (tag p1)))))))))
 
   ;; =======
   ;; | MUL |
@@ -369,7 +373,18 @@
   (define (tag p) (attach-tag 'polynomial p))
   (install-dense-package)
   (install-sparse-package)
-
+  (put 'add '(polynomial real)
+       (lambda (p r)
+         (tag (add-poly p
+                        (make-poly
+                         (variable p)
+                         (make-dense-term-list (list r)))))))
+  (put 'add '(real polynomial)
+       (lambda (r p)
+         (tag (add-poly p
+                        (make-poly
+                         (variable p)
+                         (make-dense-term-list (list r)))))))
   (put 'add '(polynomial polynomial)
        (lambda (p1 p2)
          (tag (add-poly p1 p2))))
@@ -491,7 +506,20 @@
 (div dividend divisor)
 
 ;; Exercise 2.92
-;; TODO
+;; Only implementing this for add.
+(define px (make-polynomial
+            'x
+            (make-sparse-term-list
+             (list (list 1 2) (list 0 3)))))
+(define py (make-polynomial
+            'y
+            (make-sparse-term-list
+             (list (list 1 2) (list 0 3)))))
+(add px py)
+;; (polynomial x dense 2 (polynomial y dense 2 6))
+(add py (add px (add px py)))
+;; (polynomial x dense 4 (polynomial y sparse (1 4) (0 12)))
+
 
 ;; Exercise 2.93
 ;; Use Rational instead of Rational to avoid conflicts with Rational package.
