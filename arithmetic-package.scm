@@ -58,9 +58,9 @@
               CONTENTS" datum))))
 
 ;; Internal methods
-(define (error-out op type-tags)
+(define (error-out op type-tags args)
   (error "No method for these types"
-         (list op type-tags)))
+         (list op type-tags args)))
 
 (define (raise arg)
   ;; Returns the raised arg if there is a projection.
@@ -140,7 +140,7 @@
             (let ((new-args (raise-min-arg args)))
               (if new-args
                   (apply helper op new-args)
-                  (error-out op type-tags)))))))
+                  (error-out op type-tags args)))))))
   (apply helper op args))
 
 ;; Generic selectors

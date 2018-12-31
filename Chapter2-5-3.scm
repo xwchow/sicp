@@ -267,12 +267,36 @@
   ;; =======
   ;; | GCD |
   ;; =======
+  (define (pseudoremainder-terms L1 L2)
+    (let ((exponent (inc (- (order (first-term L1))
+                            (order (first-term L2)))))
+          (co (coeff (first-term L2))))
+     (remainder-terms (mul-term-by-all-terms
+                       (make-term 0 (expt co exponent)) L1)
+                      L2)))
   (define (remainder-terms L1 L2)
     (cadr (div-terms L1 L2)))
+
+  (define (gcd-coeffs terms)
+    (if (empty-termlist? terms)
+        0
+        (gcd (coeff (first-term terms))
+             (gcd-coeffs (rest-terms terms)))))
+  (define (reduce-coeffs terms)
+    (define (helper terms g)
+      (if (empty-termlist? terms)
+          terms
+          (adjoin-term (make-term (order (first-term terms))
+                                  (/ (coeff (first-term terms)) g))
+                       (helper (rest-terms terms) g))))
+    (let ((g (gcd-coeffs terms)))
+      (helper terms g)))
   (define (gcd-terms L1 L2)
-    (if (empty-termlist? L2)
-        L1
-        (gcd-terms L2 (remainder-terms L1 L2))))
+    (define (helper L1 L2)
+      (if (empty-termlist? L2)
+          L1
+          (helper L2 (pseudoremainder-terms L1 L2))))
+    (reduce-coeffs (helper L1 L2)))
   (define (gcd-poly p1 p2)
     (if (same-variable? (variable p1)
                         (variable p2))
@@ -503,4 +527,10 @@
 ;; valid gcds. Why does this happen? Looks like it gets multipled by the
 ;; gcd of p2 and p3.
 (gcd p2 p3) ;; (polynomial x dense 1458/169)
+
+;; Exercise 2.96a
+(gcd q1 q2) ;; (polynomial x dense 1458 -2916 1458)
+
+;; Exercise 2.96b
+(gcd q1 q2) ;;  (polynomial x dense 1 -2 1)
 

@@ -23,6 +23,8 @@
        mul)
   (put 'div '(real real)
        div)
+  (put 'gcd '(real real)
+       gcd)
   (put 'make-real 'real
        (lambda (x) x))
   (put 'raise 'real
