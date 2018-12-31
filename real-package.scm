@@ -16,6 +16,9 @@
     (if (= y 0)
         x
         (gcd y (remainder x y))))
+  (define (reduce-integers n d)
+    (let ((g (gcd n d)))
+      (list (/ n g) (/ d g))))
   ;; interface
   (put 'add '(real real)
        add)
@@ -25,6 +28,8 @@
        div)
   (put 'gcd '(real real)
        gcd)
+  (put 'reduce '(real real)
+       reduce-integers)
   (put 'make-real 'real
        (lambda (x) x))
   (put 'raise 'real

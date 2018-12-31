@@ -239,9 +239,9 @@
               (t2 (first-term L2)))
           (if (> (order t2) (order t1))
               (list (the-empty-termlist L1) L1)
-              (let ((new-c (div (coeff t1) 
+              (let ((new-c (div (coeff t1)
                                 (coeff t2)))
-                    (new-o (- (order t1) 
+                    (new-o (- (order t1)
                               (order t2))))
                 (let ((mul-result-divisor (mul-term-by-all-terms
                                            (make-term new-o new-c)
@@ -252,7 +252,7 @@
                              (make-term new-o new-c)
                              (car rest-of-result))
                             (cadr rest-of-result))))))))))
-  
+
   (define (div-poly p1 p2)
     (if (same-variable? (variable p1)
                         (variable p2))
@@ -282,21 +282,21 @@
         0
         (gcd (coeff (first-term terms))
              (gcd-coeffs (rest-terms terms)))))
-  (define (reduce-coeffs terms)
-    (define (helper terms g)
-      (if (empty-termlist? terms)
-          terms
-          (adjoin-term (make-term (order (first-term terms))
-                                  (/ (coeff (first-term terms)) g))
-                       (helper (rest-terms terms) g))))
+  (define (reduce-coeffs terms g)
+    (if (empty-termlist? terms)
+        terms
+        (adjoin-term (make-term (order (first-term terms))
+                                (/ (coeff (first-term terms)) g))
+                     (reduce-coeffs (rest-terms terms) g))))
+  (define (reduce-coeffs-single terms)
     (let ((g (gcd-coeffs terms)))
-      (helper terms g)))
+      (reduce-coeffs terms g)))
   (define (gcd-terms L1 L2)
     (define (helper L1 L2)
       (if (empty-termlist? L2)
           L1
           (helper L2 (pseudoremainder-terms L1 L2))))
-    (reduce-coeffs (helper L1 L2)))
+    (reduce-coeffs-single (helper L1 L2)))
   (define (gcd-poly p1 p2)
     (if (same-variable? (variable p1)
                         (variable p2))
@@ -306,6 +306,38 @@
                     (term-list p2)))
         (error "Polys not in same var:
               GCD-POLY"
+               (list p1 p2))))
+
+  ;; ==========
+  ;; | REDUCE |
+  ;; =========
+  (define (reduce-terms n d)
+    (let ((g (gcd-terms n d))
+          (exponent (inc (- (order (first-term n))
+                            (order (first-term d)))))
+          (co (coeff (first-term d))))
+      (let ((factor (expt co exponent)))
+        (let ((nn (car (div-terms
+                        (mul-term-by-all-terms (make-term 0 factor) n)
+                        g)))
+              (dd (car (div-terms
+                        (mul-term-by-all-terms (make-term 0 factor) d)
+                        g))))
+          (let ((g1 (gcd-coeffs nn))
+                (g2 (gcd-coeffs dd)))
+            (list (reduce-coeffs nn (gcd g1 g2))
+                  (reduce-coeffs dd (gcd g1 g2))))))))
+
+  (define (reduce-poly p1 p2)
+    (if (same-variable? (variable p1)
+                        (variable p2))
+        (let ((result
+               (reduce-terms (term-list p1)
+                             (term-list p2))))
+          (list (make-poly (variable p1) (car result))
+                (make-poly (variable p1) (cadr result))))
+        (error "Polys not in same var:
+              REDUCE-POLY"
                (list p1 p2))))
 
   ;; =======
@@ -359,6 +391,11 @@
   (put 'gcd '(polynomial polynomial)
        (lambda (p1 p2)
          (tag (gcd-poly p1 p2))))
+  (put 'reduce '(polynomial polynomial)
+       (lambda (p1 p2)
+         (let ((result (reduce-poly p1 p2)))
+           (list (tag (car result))
+                 (tag (cadr result))))))
   'done)
 
 (install-polynomial-package)
@@ -469,7 +506,8 @@
   (define (rational->real r)
     (make-real (/ (numer r) (denom r))))
   (define (make-rat n d)
-    (cons n d))
+    (let ((result (reduce n d)))
+      (cons (car result) (cadr result))))
   (define (equ? r1 r2)
     (= (* (numer r1) (denom r2))
        (* (denom r1) (numer r2))))
@@ -499,12 +537,12 @@
 ;;            polynomial x sparse (2 4) (1 4) (0 1))
 
 ;; Exercise 2.94
-(define p1 
-  (make-polynomial 
+(define p1
+  (make-polynomial
    'x (make-sparse-term-list '((4 1) (3 -1) (2 -2) (1 2)))))
 
-(define p2 
-  (make-polynomial 
+(define p2
+  (make-polynomial
    'x (make-sparse-term-list '((3 1) (1 -1)))))
 
 (gcd p1 p2) ;; (polynomial x sparse (2 -1) (1 1))
@@ -534,3 +572,18 @@
 ;; Exercise 2.96b
 (gcd q1 q2) ;;  (polynomial x dense 1 -2 1)
 
+;; Exercise 2.97
+(define p1
+  (make-polynomial 'x (make-sparse-term-list '((1 1) (0 1)))))
+(define p2
+  (make-polynomial 'x (make-sparse-term-list '((3 1) (0 -1)))))
+(define p3
+  (make-polynomial 'x (make-sparse-term-list '((1 1)))))
+(define p4
+  (make-polynomial 'x (make-sparse-term-list '((2 1) (0 -1)))))
+(define rf1 (make-rational p1 p2))
+(define rf2 (make-rational p3 p4))
+
+(add rf1 rf2)
+;; (Rational (polynomial x sparse (3 -1) (2 -2) (1 -3) (0 -1))
+;;            polynomial x sparse (4 -1) (3 -1) (1 1) (0 1))
