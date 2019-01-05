@@ -47,8 +47,8 @@
   (define (deposit amount)
     (set! balance (+ balance amount))
     balance)
-  (define (dispatch auth m)
-    (cond ((not (eq? auth password)) (lambda (x) "Incorrect password"))
+  (define (dispatch entered-password m)
+    (cond ((not (eq? entered-password password)) (lambda (x) "Incorrect password"))
           ((eq? m 'withdraw) withdraw)
           ((eq? m 'deposit) deposit)
           (else (error "Unknown request:
@@ -75,8 +75,8 @@
     (define (deposit amount)
       (set! balance (+ balance amount))
       balance)
-    (define (dispatch auth m)
-      (if (not (eq? auth password))
+    (define (dispatch entered-password m)
+      (if (not (eq? entered-password password))
           (begin
             (set! incorrect-attempts (inc incorrect-attempts))
             (if (> incorrect-attempts 7)
@@ -97,3 +97,113 @@
 ((acc 'some-other-password 'deposit) 50)
 
 ;; Exercise 3.5
+(define (monte-carlo trials experiment)
+  (define (iter trials-remaining trials-passed)
+    (cond ((= trials-remaining 0)
+           (/ trials-passed trials))
+          ((experiment)
+           (iter (- trials-remaining 1)
+                 (+ trials-passed 1)))
+          (else
+           (iter (- trials-remaining 1)
+                 trials-passed))))
+  (iter trials 0))
+
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (+ low (random range))))
+
+(define (estimate-integral pred x1 x2 y1 y2 trials)
+  (define (exp)
+    (pred (random-in-range x1 (* 1. x2)) (random-in-range y1 (* 1. y2))))
+  (let ((area (* (- x2 x1) (- y2 y1)))
+        (pct (monte-carlo trials exp)))
+    (* pct area)))
+
+(define (estimate-pi trials)
+  ;; Use area of circle = PI*R^2
+  (let ((radius 3) (xc 5) (yc 7))
+    (let ((pred (lambda (x y)
+                  (<= (+ (square (- x xc))
+                         (square (- y yc)))
+                      (square radius)))))
+      (let ((area-of-circle (estimate-integral pred 2 8 4 10 trials)))
+        (/ area-of-circle (square radius))))))
+
+(* 1. (estimate-pi 100000)) ;; 3.14532
+
+;; Exercise 3.6
+(define rand
+  (let ((a 339639331) (b 26936383) (m 1154749949))
+   (define (rand-update x)
+     (remainder (+ b (* a x)) m))
+   (let ((x (random-in-range 0 m)))
+     (define generate
+       (lambda () (set! x (rand-update x)) x))
+     (define reset
+       (lambda (reset-value)
+         (set! x reset-value)
+         x))
+     (define (dispatch msg)
+       (cond ((eq? msg 'generate)
+              (generate))
+             ((eq? msg 'reset)
+              reset)
+             (else (error "Unsupported operation:" msg))))
+     dispatch)))
+
+(rand 'generate)
+((rand 'reset) 1)
+
+;; Exercise 3.7
+(define (make-account balance password)
+  (let ((passwords (list password)))
+    (define (withdraw amount)
+      (if (>= balance amount)
+          (begin (set! balance
+                   (- balance amount))
+                 balance)
+          "Insufficient funds"))
+    (define (deposit amount)
+      (set! balance (+ balance amount))
+      balance)
+    (define (verify entered-password)
+      (auth entered-password))
+    (define (add-password new-password)
+      (set! passwords (cons new-password passwords)))
+    (define (auth p)
+      (member p passwords))
+    (define (dispatch entered-password m)
+      (cond ((not (auth entered-password)) (lambda (x) "Incorrect password"))
+            ((eq? m 'withdraw) withdraw)
+            ((eq? m 'deposit) deposit)
+            ((eq? m 'verify) verify)
+            ((eq? m 'add-password) add-password)
+            (else (error "Unknown request:
+                 MAKE-ACCOUNT" m))))
+    dispatch))
+
+(define (make-joint account password joint-password)
+  (if (account 'verify password)
+      (begin ((account password 'add-password) joint-password)
+             account)
+      (error "Wrong password:" password)))
+(define peter-acc (make-account 100 'open-sesame))
+(define paul-acc
+  (make-joint peter-acc
+              'open-sesame
+              'rosebud))
+
+((paul-acc 'rosebud 'deposit) 100)
+((peter-acc 'open-sesame 'withdraw) 200)
+
+;; Exercise 3.8
+(define f
+  ;; Returns a function that remembers the previous value.
+  (let ((prev 0))
+    (lambda (x)
+      (let ((tmp prev))
+        (set! prev x)
+        tmp))))
+
+(+ (f 0) (f 1))
