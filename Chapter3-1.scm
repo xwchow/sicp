@@ -246,7 +246,7 @@
 ;; (W1 50) decrements balance in E2 by 50
 
 ;; Exercise 3.11
-;; Done but not here.
+;; Done. Not here.
 
 ;; Exercise 3.12
 (define (append x y)
@@ -294,3 +294,80 @@
 (define w (mystery v))
 ;; w: '(a b c d)
 ;; v: '(a)
+
+;; Exercise 3.15
+;; Done. Not here.
+
+;; Exercise 3.16
+(define (count-pairs x)
+  (if (not (pair? x))
+      0
+      (+ (count-pairs (car x))
+         (count-pairs (cdr x))
+         1)))
+
+;; returns 3
+(define c (cons 'c 'd))
+(define b (cons 'b c))
+(define a (cons 'a b))
+(count-pairs a)
+
+;; returns 4
+(define c (cons 'c 'd))
+(define b (cons c c))
+(define a (cons 'a b))
+(count-pairs a)
+
+;; returns 7
+(define c (cons 'c 'd))
+(define b (cons c c))
+(define a (cons b b))
+(count-pairs a)
+
+;; never return
+(define c (cons 'c 'd))
+(define b (cons 'b c))
+(define a (cons 'a b))
+(set-cdr! c a)
+
+;; Exercise 3.17
+(define (count-pairs x)
+  (let ((seen-pairs '()))
+    (define (seen? x)
+      (member x seen-pairs))
+    (define (helper x)
+      (cond ((seen? x) 0)
+            ((not (pair? x)) 0)
+            (else
+             (set! seen-pairs (cons x seen-pairs))
+             (+ (helper (car x))
+                (helper (cdr x))
+                1))))
+    (helper x)))
+
+;; used to return 3
+(define c (cons 'c 'd))
+(define b (cons 'b c))
+(define a (cons 'a b))
+(count-pairs a)
+
+;; used to return 4
+(define c (cons 'c 'd))
+(define b (cons c c))
+(define a (cons 'a b))
+(count-pairs a)
+
+;; returns 7
+(define c (cons 'c 'd))
+(define b (cons c c))
+(define a (cons b b))
+(count-pairs a)
+
+;; never return
+(define c (cons 'c 'd))
+(define b (cons 'b c))
+(define a (cons 'a b))
+(set-cdr! c a)
+(count-pairs a)
+
+;; Exercise 3.18
