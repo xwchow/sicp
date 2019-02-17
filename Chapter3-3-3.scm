@@ -95,12 +95,12 @@
 ((tb 'insert-proc!) '(d e f g h) 2.718)
 ((tb 'lookup-proc) '(d e f g h))
 
-;; Exercise 3.27
+;; Exercise 3.26
 ;; Assuming that we already know how to represent a list
 ;; as a binary tree, we can represent a table as a binary tree
 ;; where each node can be a subtable or a value.
 
-;; Exercise 3.28
+;; Exercise 3.27
 ;; Basically, there is an environment which contains the table
 ;; which is referenced in every call to memo-fib.
 ;; Pre-computed values get set in the table and retrieved in constant time.
